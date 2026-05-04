@@ -91,8 +91,16 @@ elif mode == "Lehrer-Dashboard":
         control_sheet.update(range_name='A1', values=[[aktuelle_runde + 1]])
         st.rerun()
 if mode == "Lehrer-Dashboard":
-    neue_runde = st.number_input("Runde manuell setzen", value=aktuelle_runde)
-    if st.button("Runde in Google Sheets aktualisieren"):
-        control_sheet.update('A1', [[neue_runde]]) # Doppelte Klammern für Google API
-        st.success(f"Runde wurde auf {neue_runde} gesetzt!")
-        st.rerun()
+    st.header(f"Ergebnisse Runde {aktuelle_runde}")
+    
+    # Daten laden
+    df = pd.DataFrame(sheet.worksheet("Teams").get_all_records())
+    
+    if not df.empty:
+        # Nur Daten der aktuellen Runde filtern
+        aktuelle_daten = df[df['Runde'] == aktuelle_runde]
+        st.table(aktuelle_daten)
+        
+        # Ein Liniendiagramm über den Kostenverlauf aller Runden
+        st.subheader("Kostenentwicklung")
+        st.line_chart(df, x="Runde", y="Gesamtkosten_kumuliert", color="TeamID")
