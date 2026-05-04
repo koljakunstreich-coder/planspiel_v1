@@ -58,7 +58,7 @@ elif mode == "Lehrer-Dashboard":
     
     if st.button("Nächste Runde freischalten"):
        # Wir packen den Wert in doppelte Klammern [[...]], um eine "Tabelle" zu simulieren
-control_sheet.update(range_name='A1', values=[[aktuelle_runde + 1]])
+        control_sheet.update(range_name='A1', values=[[aktuelle_runde + 1]])
         st.rerun()
 if mode == "Lehrer-Dashboard":
     neue_runde = st.number_input("Runde manuell setzen", value=aktuelle_runde)
