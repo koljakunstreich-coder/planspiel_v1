@@ -44,61 +44,41 @@ if mode == "Team-Input":
     bestellmenge = st.number_input("Bestellmenge für die nächste Woche:", min_value=0, step=1)
     
 if st.button("Bestellung absenden"):
-        teams_sheet = sheet.worksheet("Teams")
-        all_teams = teams_sheet.get_all_records()
-        
-        # --- SCHRITT A: Daten für die Berechnung vorbereiten ---
-        # Nachfrage-Werte pro Runde (aus deinem Bild)
-        nachfrage_liste = {1: 7, 2: 2, 3: 15, 4: 32, 5: 28, 6: 1, 7: 10}
-        aktuelle_nachfrage = nachfrage_liste.get(aktuelle_runde, 0)
-        
-        row_index = None
-        alt_bestand = 40 # Standardwert für Runde 1
-        alt_kosten = 0
+    teams_sheet = sheet.worksheet("Teams")
     
-        # Suche das Team und hole die alten Werte
-        for i, entry in enumerate(all_teams, start=2):
-            if str(entry["TeamID"]) == team_id:
-                row_index = i
-                # Falls schon Werte im Sheet stehen, nimm diese, sonst Startwerte
-                alt_bestand = entry.get("Lagerbestand", 40) if entry.get("Lagerbestand") != "" else 40
-                alt_kosten = entry.get("Gesamtkosten", 0) if entry.get("Gesamtkosten") != "" else 0
-                break
+    # 1. Wir holen die Daten der VORHERIGEN Runde dieses Teams, 
+    # um den alten Lagerbestand und die alten Gesamtkosten zu wissen.
+    all_data = teams_sheet.get_all_records()
     
-        if row_index:
-            # --- SCHRITT B: Die eigentliche Berechnung ---
-            
-            # 1. Neuer Bestand vor Verkauf
-            bestand_vor_verkauf = alt_bestand + bestellmenge
-            
-            # 2. Verkäufe berechnen (man kann nicht mehr verkaufen als man hat)
-            tatsaechlich_verkauft = min(bestand_vor_verkauf, aktuelle_nachfrage)
-            fehlmenge = max(0, aktuelle_nachfrage - bestand_vor_verkauf)
-            
-            # 3. Neuer Lagerbestand nach Verkauf
-            neuer_bestand = bestand_vor_verkauf - tatsaechlich_verkauft
-            
-            # 4. Kosten berechnen
-            kosten_dieser_runde = 0
-            if bestellmenge > 0:
-                kosten_dieser_runde += 50 # Bestellfixe Kosten
-            
-            kosten_dieser_runde += (neuer_bestand * 2) # Lagerkosten
-            kosten_dieser_runde += (fehlmenge * 100)   # Strafkosten
-            
-            neue_gesamtkosten = alt_kosten + kosten_dieser_runde
+    # Standardwerte falls erste Runde
+    alt_bestand = 40
+    alt_gesamtkosten = 0
     
-            # --- SCHRITT C: Zurückschreiben ins Google Sheet ---
-            # Spalte B=2 (Name), C=3 (Runde), D=4 (Bestellung), E=5 (Bestand), F=6 (Kosten)
-            teams_sheet.update_cell(row_index, 2, team_name)
-            teams_sheet.update_cell(row_index, 3, aktuelle_runde)
-            teams_sheet.update_cell(row_index, 4, bestellmenge)
-            teams_sheet.update_cell(row_index, 5, neuer_bestand)
-            teams_sheet.update_cell(row_index, 6, neue_gesamtkosten)
-            
-            st.success(f"Berechnung abgeschlossen für Runde {aktuelle_runde}!")
-            st.metric("Neuer Lagerbestand", f"{neuer_bestand} Bikes")
-            st.metric("Gesamtkosten", f"{neue_gesamtkosten} €", f"+{kosten_dieser_runde} €")                                  
+    # Suche in den bisherigen Zeilen nach dem letzten Eintrag dieses Teams
+    for entry in reversed(all_data):
+        if str(entry["TeamID"]) == team_id:
+            alt_bestand = entry["Lagerbestand_Ende"]
+            alt_gesamtkosten = entry["Gesamtkosten_kumuliert"]
+            break
+
+    # 2. Berechnung (wie gehabt)
+    nachfrage_liste = {1: 7, 2: 5, 3: 10, 4: 8, 5: 15, 6: 2, 7: 1} # Beispielwerte
+    aktuelle_nachfrage = nachfrage_liste.get(aktuelle_runde, 0)
+    
+    bestand_vor_verkauf = alt_bestand + bestellmenge
+    tatsaechlich_verkauft = min(bestand_vor_verkauf, aktuelle_nachfrage)
+    fehlmenge = max(0, aktuelle_nachfrage - bestand_vor_verkauf)
+    neuer_bestand = bestand_vor_verkauf - tatsaechlich_verkauft
+    
+    kosten_diese_runde = (50 if bestellmenge > 0 else 0) + (neuer_bestand * 2) + (fehlmenge * 100)
+    neue_gesamtkosten = alt_gesamtkosten + kosten_diese_runde
+
+    # 3. DATEN ANHÄNGEN (Erzeugt für jede Runde eine neue Zeile)
+    # Reihenfolge: Runde, TeamID, Teamname, Bestellung, Bestand, Kosten_Runde, Gesamtkosten
+    neue_zeile = [aktuelle_runde, team_id, team_name, bestellmenge, neuer_bestand, kosten_diese_runde, neue_gesamtkosten]
+    teams_sheet.append_row(neue_zeile)
+    
+    st.success(f"Runde {aktuelle_runde} für {team_id} gespeichert!")                                 
 elif mode == "Lehrer-Dashboard":
     st.header("📊 Live-Auswertung (Beamer-Ansicht)")
     # Daten aus Google Sheets laden und als Tabelle/Grafik anzeigen
