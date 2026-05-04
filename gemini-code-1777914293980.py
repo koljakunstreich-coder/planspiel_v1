@@ -5,7 +5,15 @@ import pandas as pd
 
 # 1. Verbindung zu Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("dein_google_key.json", scope)
+# 1. Definiere den Zugriffsbereich (Scope)
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+# 2. Lade die Daten aus den Streamlit Secrets (statt aus einer Datei)
+# Wichtig: Der Name ["gcp_service_account"] muss exakt so in deinen Secrets stehen
+creds_dict = st.secrets["gcp_service_account"]
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
+# 3. Autorisiere den Client
 client = gspread.authorize(creds)
 sheet = client.open("Planspiel_Daten")
 
