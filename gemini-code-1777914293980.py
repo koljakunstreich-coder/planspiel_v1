@@ -59,3 +59,9 @@ elif mode == "Lehrer-Dashboard":
     if st.button("Nächste Runde freischalten"):
         control_sheet.update('A1', aktuelle_runde + 1)
         st.rerun()
+if mode == "Lehrer-Dashboard":
+    neue_runde = st.number_input("Runde manuell setzen", value=aktuelle_runde)
+    if st.button("Runde in Google Sheets aktualisieren"):
+        control_sheet.update('A1', [[neue_runde]]) # Doppelte Klammern für Google API
+        st.success(f"Runde wurde auf {neue_runde} gesetzt!")
+        st.rerun()
