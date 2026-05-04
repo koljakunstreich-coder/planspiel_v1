@@ -44,6 +44,31 @@ if mode == "Team-Input":
     bestellmenge = st.number_input("Bestellmenge für die nächste Woche:", min_value=0, step=1)
     
     if st.button("Bestellung absenden"):
+        if st.button("Bestellung absenden"):
+    # 1. Verbindung zum Teams-Tab herstellen
+    teams_sheet = sheet.worksheet("Teams")
+    
+    # 2. Alle Daten aus dem Sheet laden, um die richtige Zeile zu finden
+    all_teams = teams_sheet.get_all_records()
+    
+    # 3. Suche die Zeilennummer für das ausgewählte Team (z.B. "Team 1")
+    # Wir starten bei Zeile 2, da Zeile 1 die Überschrift ist
+    row_index = None
+    for i, entry in enumerate(all_teams, start=2):
+        if entry["TeamID"] == team_id:
+            row_index = i
+            break
+    
+    if row_index:
+        # 4. Daten in die Spalten schreiben (Spalte B=Teamname, C=Runde, D=Bestellung)
+        # Die Spaltennummern sind: A=1, B=2, C=3, D=4, E=5, F=6
+        teams_sheet.update_cell(row_index, 2, team_name)    # Teamname in Spalte B
+        teams_sheet.update_cell(row_index, 3, aktuelle_runde) # Aktuelle Runde in Spalte C
+        teams_sheet.update_cell(row_index, 4, bestellmenge) # Menge in Spalte D
+        
+        st.success(f"Erfolgreich gespeichert! Team: {team_name}, Runde: {aktuelle_runde}, Menge: {bestellmenge}")
+    else:
+        st.error("TeamID nicht in der Tabelle gefunden. Prüfe Spalte A im Sheet 'Teams'!")
         # Daten in Google Sheet schreiben
         teams_sheet = sheet.worksheet("Teams")
         # Hier Logik einfügen, um die Zeile des Teams zu finden und die Menge zu speichern
