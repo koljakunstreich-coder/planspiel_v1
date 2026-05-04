@@ -43,8 +43,7 @@ if mode == "Team-Input":
     
     bestellmenge = st.number_input("Bestellmenge für die nächste Woche:", min_value=0, step=1)
     
-   
- if st.button("Bestellung absenden"):
+   if st.button("Bestellung absenden"):
         teams_sheet = sheet.worksheet("Teams")
         all_teams = teams_sheet.get_all_records()
         
