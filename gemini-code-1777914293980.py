@@ -44,7 +44,7 @@ if mode == "Team-Input":
     bestellmenge = st.number_input("Bestellmenge für die nächste Woche:", min_value=0, step=1)
     
    
-   if st.button("Bestellung absenden"):
+ if st.button("Bestellung absenden"):
     teams_sheet = sheet.worksheet("Teams")
     all_teams = teams_sheet.get_all_records()
     
@@ -99,8 +99,7 @@ if mode == "Team-Input":
         
         st.success(f"Berechnung abgeschlossen für Runde {aktuelle_runde}!")
         st.metric("Neuer Lagerbestand", f"{neuer_bestand} Bikes")
-        st.metric("Gesamtkosten", f"{neue_gesamtkosten} €", f"+{kosten_dieser_runde} €")
-# Ab hier wäre der Code wieder auf der Ebene des 'if', falls noch etwas kommt
+        st.metric("Gesamtkosten", f"{neue_gesamtkosten} €", f"+{kosten_dieser_runde} €")                                  
 elif mode == "Lehrer-Dashboard":
     st.header("📊 Live-Auswertung (Beamer-Ansicht)")
     # Daten aus Google Sheets laden und als Tabelle/Grafik anzeigen
