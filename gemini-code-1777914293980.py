@@ -44,27 +44,62 @@ if mode == "Team-Input":
     bestellmenge = st.number_input("Bestellmenge für die nächste Woche:", min_value=0, step=1)
     
    
-    if st.button("Bestellung absenden"):
-        # Ab hier MUSS alles eingerückt sein (4 Leerzeichen oder 1 Tab)
-        teams_sheet = sheet.worksheet("Teams")
+   if st.button("Bestellung absenden"):
+    teams_sheet = sheet.worksheet("Teams")
+    all_teams = teams_sheet.get_all_records()
+    
+    # --- SCHRITT A: Daten für die Berechnung vorbereiten ---
+    # Nachfrage-Werte pro Runde (aus deinem Bild)
+    nachfrage_liste = {1: 7, 2: 2, 3: 15, 4: 32, 5: 28, 6: 1, 7: 10}
+    aktuelle_nachfrage = nachfrage_liste.get(aktuelle_runde, 0)
+    
+    row_index = None
+    alt_bestand = 40 # Standardwert für Runde 1
+    alt_kosten = 0
+
+    # Suche das Team und hole die alten Werte
+    for i, entry in enumerate(all_teams, start=2):
+        if str(entry["TeamID"]) == team_id:
+            row_index = i
+            # Falls schon Werte im Sheet stehen, nimm diese, sonst Startwerte
+            alt_bestand = entry.get("Lagerbestand", 40) if entry.get("Lagerbestand") != "" else 40
+            alt_kosten = entry.get("Gesamtkosten", 0) if entry.get("Gesamtkosten") != "" else 0
+            break
+
+    if row_index:
+        # --- SCHRITT B: Die eigentliche Berechnung ---
         
-        # Daten für die Suche laden
-        all_teams = teams_sheet.get_all_records()
+        # 1. Neuer Bestand vor Verkauf
+        bestand_vor_verkauf = alt_bestand + bestellmenge
         
-        row_index = None
-        for i, entry in enumerate(all_teams, start=2):
-            if entry["TeamID"] == team_id:
-                row_index = i
-                break
-                
-        if row_index:
-            # Auch diese Zeilen müssen eingerückt sein
-            teams_sheet.update_cell(row_index, 2, team_name)
-            teams_sheet.update_cell(row_index, 3, aktuelle_runde)
-            teams_sheet.update_cell(row_index, 4, bestellmenge)
-            st.success(f"Daten für {team_id} gespeichert!")
-        else:
-            st.error("TeamID nicht gefunden!")
+        # 2. Verkäufe berechnen (man kann nicht mehr verkaufen als man hat)
+        tatsaechlich_verkauft = min(bestand_vor_verkauf, aktuelle_nachfrage)
+        fehlmenge = max(0, aktuelle_nachfrage - bestand_vor_verkauf)
+        
+        # 3. Neuer Lagerbestand nach Verkauf
+        neuer_bestand = bestand_vor_verkauf - tatsaechlich_verkauft
+        
+        # 4. Kosten berechnen
+        kosten_dieser_runde = 0
+        if bestellmenge > 0:
+            kosten_dieser_runde += 50 # Bestellfixe Kosten
+        
+        kosten_dieser_runde += (neuer_bestand * 2) # Lagerkosten
+        kosten_dieser_runde += (fehlmenge * 100)   # Strafkosten
+        
+        neue_gesamtkosten = alt_kosten + kosten_dieser_runde
+
+        # --- SCHRITT C: Zurückschreiben ins Google Sheet ---
+        # Spalte B=2 (Name), C=3 (Runde), D=4 (Bestellung), E=5 (Bestand), F=6 (Kosten)
+        teams_sheet.update_cell(row_index, 2, team_name)
+        teams_sheet.update_cell(row_index, 3, aktuelle_runde)
+        teams_sheet.update_cell(row_index, 4, bestellmenge)
+        teams_sheet.update_cell(row_index, 5, neuer_bestand)
+        teams_sheet.update_cell(row_index, 6, neue_gesamtkosten)
+        
+        st.success(f"Berechnung abgeschlossen für Runde {aktuelle_runde}!")
+        st.metric("Neuer Lagerbestand", f"{neuer_bestand} Bikes")
+        st.metric("Gesamtkosten", f"{neue_gesamtkosten} €", f"+{kosten_dieser_runde} €")
 # Ab hier wäre der Code wieder auf der Ebene des 'if', falls noch etwas kommt
 elif mode == "Lehrer-Dashboard":
     st.header("📊 Live-Auswertung (Beamer-Ansicht)")
