@@ -19,7 +19,15 @@ sheet = client.open("Planspiel_Daten")
 
 # 2. Lehrer-Steuerung auslesen
 control_sheet = sheet.worksheet("Steuerung")
-aktuelle_runde = int(control_sheet.acell('A1').value)
+# Den Wert aus A1 holen
+cell_value = control_sheet.acell('A1').value
+
+# Prüfen, ob die Zelle leer ist oder keine Zahl enthält
+if cell_value is None or not str(cell_value).isdigit():
+    st.warning("Achtung: In Zelle A1 von 'Steuerung' wurde keine gültige Zahl gefunden. Standardwert 1 wird genutzt.")
+    aktuelle_runde = 1
+else:
+    aktuelle_runde = int(cell_value)
 
 # 3. UI Design
 st.title("🚲 E-Bike Startup Challenge")
