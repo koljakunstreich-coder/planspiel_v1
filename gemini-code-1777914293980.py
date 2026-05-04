@@ -39,16 +39,24 @@ if mode == "Team-Input":
     team_name = st.text_input("Startup Name", placeholder="z.B. GreenWheels")
     
     st.header(f"Runde {aktuelle_runde}")
-    st.write(f"Willkommen {team_name if team_name else team_id}!")
-    
-    bestellmenge = st.number_input("Bestellmenge für die nächste Woche:", min_value=0, step=1)
-    
+# 1. Wir suchen zuerst, ob das Team schon einmal einen Namen abgegeben hat
+letzter_name = ""
+if all_data: # all_data sind die bisherigen Einträge aus dem Sheet "Teams"
+    for entry in reversed(all_data):
+        if str(entry.get("TeamID")) == team_id:
+            letzter_name = entry.get("Teamname", "")
+            break
+
+# 2. Das Eingabefeld für den Namen
+# Falls schon ein Name existiert, wird dieser als Standardwert (value) gesetzt
+team_name = st.text_input("Startup Name", value=letzter_name, placeholder="z.B. GreenWheels")
+
 if st.button("Bestellung absenden"):
-    teams_sheet = sheet.worksheet("Teams")
+    # ... (hier folgt dein restlicher Code zum Berechnen und Speichern)
     
-    # 1. Wir holen die Daten der VORHERIGEN Runde dieses Teams, 
-    # um den alten Lagerbestand und die alten Gesamtkosten zu wissen.
-    all_data = teams_sheet.get_all_records()
+    # Beim Speichern nutzen wir nun den 'team_name' (egal ob neu getippt oder übernommen)
+    neue_zeile = [aktuelle_runde, team_id, team_name, bestellmenge, neuer_bestand, kosten_diese_runde, neue_gesamtkosten]
+    teams_sheet.append_row(neue_zeile)
     
     # Standardwerte für die erste Runde
     alt_bestand = 40
