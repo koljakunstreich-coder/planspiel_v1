@@ -14,8 +14,9 @@ sheet = client.open("Planspiel_Daten")
 teams_sheet = sheet.worksheet("Teams")
 control_sheet = sheet.worksheet("Steuerung")
 
-# --- 2. DATEN VORAB LADEN (Wichtig gegen NameError) ---
+# --- 2. DATEN VORAB LADEN ---
 try:
+    # Wir laden die Daten frisch, damit der "Gedächtnis-Effekt" sofort eintritt
     all_data = teams_sheet.get_all_records()
 except:
     all_data = []
@@ -32,33 +33,38 @@ st.title("🚲 E-Bike Startup Challenge")
 mode = st.sidebar.selectbox("Modus", ["Team-Input", "Lehrer-Dashboard"])
 
 if mode == "Team-Input":
-    team_id = st.selectbox("Wähle dein Team", [f"Team {i}" for i in range(1, 13)])
+    # Auswahl der TeamID (Konstante ID über das ganze Spiel)
+    team_id = st.selectbox("Wähle deine Team-Nummer", [f"Team {i}" for i in range(1, 13)])
     
-    # Historischen Namen suchen
+    # GEDÄCHTNIS-LOGIK:
+    # Wir suchen den Namen, den dieses Team zuletzt benutzt hat
     letzter_name = ""
     for entry in reversed(all_data):
         if str(entry.get("TeamID")) == team_id:
             letzter_name = entry.get("Teamname", "")
             break
 
-    # Eingabefelder
-    team_name = st.text_input("Startup Name", value=letzter_name, placeholder="z.B. GreenWheels")
+    # Das Namensfeld wird mit dem gefundenen Namen vorausgefüllt
+    team_name = st.text_input("Startup Name", value=letzter_name, placeholder="Wird nach Runde 1 automatisch geladen...")
+    
+    st.divider()
     st.header(f"Runde {aktuelle_runde}")
-    bestellmenge = st.number_input("Bestellmenge für diese Woche:", min_value=0, step=1)
+    bestellmenge = st.number_input("Bestellmenge (Stück):", min_value=0, step=1)
 
     if st.button("Bestellung absenden"):
-        # Aktuelle Werte für dieses Team ermitteln (Bestand/Kosten)
+        # Aktuelle Werte für dieses Team aus der Vorrunde ermitteln
         alt_bestand = 40
         alt_gesamtkosten = 0
         
         for entry in reversed(all_data):
-            current_id = entry.get("TeamID") or entry.get("Team ID") or entry.get("teamid")
+            # Flexibler Spaltenzugriff
+            current_id = entry.get("TeamID") or entry.get("Team ID")
             if current_id and str(current_id) == team_id:
                 alt_bestand = entry.get("Lagerbestand_Ende", 40)
                 alt_gesamtkosten = entry.get("Gesamtkosten_kumuliert", 0)
                 break
         
-        # Berechnung der Logik
+        # --- BERECHNUNGSLOGIK ---
         nachfrage_liste = {1: 7, 2: 5, 3: 10, 4: 8, 5: 15, 6: 2, 7: 1}
         aktuelle_nachfrage = nachfrage_liste.get(aktuelle_runde, 0)
         
@@ -70,11 +76,13 @@ if mode == "Team-Input":
         kosten_diese_runde = (50 if bestellmenge > 0 else 0) + (neuer_bestand * 2) + (fehlmenge * 100)
         neue_gesamtkosten = alt_gesamtkosten + kosten_diese_runde
 
-        # Speichern in "Teams" (Historie-Weg)
+        # --- SPEICHERN ---
+        # Der team_name wird hier wieder mitgespeichert, damit er in der nächsten Runde 
+        # über 'reversed(all_data)' wiedergefunden wird.
         neue_zeile = [aktuelle_runde, team_id, team_name, bestellmenge, neuer_bestand, kosten_diese_runde, neue_gesamtkosten]
         teams_sheet.append_row(neue_zeile)
         
-        st.success(f"Bestellung gesendet! Bestand: {neuer_bestand}, Kosten Runde: {kosten_diese_runde}€")
+        st.success(f"Erfolgreich gespeichert! Ihr habt nun {neuer_bestand} Bikes im Lager.")
         st.balloons()
 
 elif mode == "Lehrer-Dashboard":
@@ -83,18 +91,18 @@ elif mode == "Lehrer-Dashboard":
     if all_data:
         df = pd.DataFrame(all_data)
         
-        # Tabellen-Ansicht
-        st.subheader("Aktuelle Tabellenübersicht")
+        # Nur die aktuellsten Daten pro Team für die Tabelle anzeigen
+        st.subheader("Aktueller Stand aller Teams")
         st.dataframe(df)
         
-        # Kosten-Grafik
-        st.subheader("Kostenentwicklung (kumuliert)")
+        # Kostenverlauf-Grafik
+        st.subheader("Finanzielle Entwicklung")
         st.line_chart(df, x="Runde", y="Gesamtkosten_kumuliert", color="TeamID")
     else:
-        st.info("Noch keine Daten vorhanden.")
+        st.info("Warten auf erste Abgaben der Teams...")
 
     st.divider()
     if st.button("Nächste Runde freischalten"):
         control_sheet.update(range_name='A1', values=[[aktuelle_runde + 1]])
-        st.success(f"Runde {aktuelle_runde + 1} ist jetzt aktiv!")
+        st.success(f"Runde {aktuelle_runde + 1} wurde gestartet!")
         st.rerun()
