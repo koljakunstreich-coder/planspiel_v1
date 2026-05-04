@@ -50,16 +50,22 @@ if st.button("Bestellung absenden"):
     # um den alten Lagerbestand und die alten Gesamtkosten zu wissen.
     all_data = teams_sheet.get_all_records()
     
-    # Standardwerte falls erste Runde
+    # Standardwerte für die erste Runde
     alt_bestand = 40
     alt_gesamtkosten = 0
     
-    # Suche in den bisherigen Zeilen nach dem letzten Eintrag dieses Teams
+    # Wir gehen die Daten rückwärts durch, um den aktuellsten Stand zu finden
     for entry in reversed(all_data):
-        if str(entry["TeamID"]) == team_id:
-            alt_bestand = entry["Lagerbestand_Ende"]
-            alt_gesamtkosten = entry["Gesamtkosten_kumuliert"]
+        # .get() verhindert den KeyError. Es sucht nach 'TeamID' (Groß-/Kleinschreibung beachten!)
+        # Falls du im Sheet "Team ID" (mit Leerzeichen) geschrieben hast, ändere es hier auch.
+        current_id = entry.get("TeamID") or entry.get("Team ID") or entry.get("teamid")
+        
+        if current_id and str(current_id) == team_id:
+            # Falls die Spaltennamen im Sheet anders sind, hier ebenfalls anpassen
+            alt_bestand = entry.get("Lagerbestand_Ende", 40)
+            alt_gesamtkosten = entry.get("Gesamtkosten_kumuliert", 0)
             break
+        
 
     # 2. Berechnung (wie gehabt)
     nachfrage_liste = {1: 7, 2: 5, 3: 10, 4: 8, 5: 15, 6: 2, 7: 1} # Beispielwerte
