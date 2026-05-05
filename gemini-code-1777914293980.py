@@ -64,7 +64,7 @@ if mode == "Team-Input":
                 break
         
         # --- BERECHNUNGSLOGIK ---
-        nachfrage_liste = {1: 7, 2: 55, 3: 10, 4: 8, 5: 15, 6: 2, 7: 1}
+        nachfrage_liste = {1: 7, 2: 5, 3: 1, 4: 17, 5: 32, 6: 16, 7: 12}
         aktuelle_nachfrage = nachfrage_liste.get(aktuelle_runde, 0)
         
         bestand_vor_verkauf = alt_bestand + bestellmenge
