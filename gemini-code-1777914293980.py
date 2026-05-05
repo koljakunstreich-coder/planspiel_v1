@@ -51,8 +51,6 @@ if mode == "Team-Input":
     st.divider()
     st.header(f"Runde {aktuelle_runde}")
     bestellmenge = st.number_input("Bestellmenge (Stück):", min_value=0, step=1)
-    st.sidebar.button("🔄 Daten aktualisieren"):
-    st.rerun()
 
     if st.button("Bestellung absenden"):
         # Aktuelle Werte für dieses Team aus der Vorrunde ermitteln
@@ -87,6 +85,13 @@ if mode == "Team-Input":
        
         st.success(f"Erfolgreich gespeichert! Ihr habt nun {neuer_bestand} Bikes im Lager.")
         st.balloons()
+
+    # Kleiner visueller Abstand
+    st.write("---")
+
+    # 2. Der Aktualisieren-Button direkt darunter
+    if st.button("🔄 Neue Runde laden / Daten prüfen"):
+        st.rerun()
 
 elif mode == "Lehrer-Dashboard":
     st.header(f"📊 Auswertung Runde {aktuelle_runde}")
