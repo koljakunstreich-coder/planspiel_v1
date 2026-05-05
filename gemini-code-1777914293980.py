@@ -16,6 +16,7 @@ control_sheet = sheet.worksheet("Steuerung")
 
 # --- 2. DATEN VORAB LADEN ---
 try:
+    # Wir laden die Daten frisch für die Historien-Suche
     all_data = teams_sheet.get_all_records()
 except:
     all_data = []
@@ -35,7 +36,7 @@ mode = st.sidebar.selectbox("Modus", ["Team-Input", "Lehrer-Dashboard"])
 if mode == "Team-Input":
     team_id = st.selectbox("Wähle deine Team-Nummer", [f"Team {i}" for i in range(1, 13)])
     
-    # GEDÄCHTNIS-LOGIK
+    # GEDÄCHTNIS-LOGIK (Teamname finden)
     letzter_name = ""
     for entry in reversed(all_data):
         if str(entry.get("TeamID")) == team_id:
@@ -49,14 +50,16 @@ if mode == "Team-Input":
     bestellmenge = st.number_input("Bestellmenge (Stück):", min_value=0, step=1)
 
     if st.button("Bestellung absenden"):
-        # Vorwerte ermitteln
+        # Historische Werte für dieses Team ermitteln (Bestand & Kosten-Summe)
         alt_bestand = 40
         alt_gesamtkosten = 0
         
         for entry in reversed(all_data):
             current_id = entry.get("TeamID") or entry.get("Team ID")
             if current_id and str(current_id) == team_id:
+                # Hier ziehen wir den Endbestand und die kumulierten Kosten der Vorrunde
                 alt_bestand = entry.get("Lagerbestand_Ende", 40)
+                # Falls die Spalte im Sheet anders heißt, hier anpassen:
                 alt_gesamtkosten = entry.get("Gesamtkosten_kumuliert", 0)
                 break
         
@@ -69,17 +72,18 @@ if mode == "Team-Input":
         fehlmenge = max(0, aktuelle_nachfrage - bestand_vor_verkauf)
         neuer_bestand = bestand_vor_verkauf - tatsaechlich_verkauft
         
-        # Einzelausweis der Kosten
+        # Einzelne Kostenkomponenten
         fixkosten = 50 if bestellmenge > 0 else 0
         lagerkosten = neuer_bestand * 2
         fehlmengen_kosten = fehlmenge * 100
         
         kosten_diese_runde = fixkosten + lagerkosten + fehlmengen_kosten
+        # Hier passiert die Kumulierung:
         neue_gesamtkosten = alt_gesamtkosten + kosten_diese_runde
 
         # --- SPEICHERN ---
-        # Die Spaltenreihenfolge im Sheet sollte sein: 
-        # Runde, TeamID, Teamname, Bestellung, Fixkosten, Lagerkosten, Fehlmengen_Kosten, Bestand_Ende, Kosten_Runde, Gesamtkosten
+        # Spalten: Runde (A), TeamID (B), Teamname (C), Bestellung (D), Fixkosten (E), 
+        # Lagerkosten (F), Fehlmengen_Kosten (G), Lagerbestand_Ende (H), Kosten_Runde (I), Gesamtkosten_kumuliert (J)
         neue_zeile = [
             aktuelle_runde, 
             team_id, 
@@ -92,16 +96,14 @@ if mode == "Team-Input":
             kosten_diese_runde, 
             neue_gesamtkosten
         ]
+        
         teams_sheet.append_row(neue_zeile)
         
-        st.success(f"Erfolgreich gespeichert! Ihr habt nun {neuer_bestand} Bikes im Lager.")
-        st.info(f"Kosten dieser Runde: {fixkosten}€ Fix + {lagerkosten}€ Lager + {fehlmengen_kosten}€ Fehlmenge = {kosten_diese_runde}€")
+        st.success(f"Runde {aktuelle_runde} erfolgreich gespeichert!")
+        st.info(f"Kosten Runde: {kosten_diese_runde}€ | Gesamtstand: {neue_gesamtkosten}€")
         st.balloons()
 
-    # Kleiner visueller Abstand
     st.write("---")
-
-    # 2. Der Aktualisieren-Button unter dem Absende-Button
     if st.button("🔄 Neue Runde laden / Daten prüfen"):
         st.rerun()
 
@@ -114,10 +116,10 @@ elif mode == "Lehrer-Dashboard":
         st.dataframe(df)
         
         st.subheader("Finanzielle Entwicklung")
-        # Achte darauf, dass der Spaltenname exakt "Gesamtkosten_kumuliert" heißt (oder wie im Sheet vergeben)
-        # Falls du die Spalte im Sheet umbenannt hast, passe den Namen hier an:
-        y_achse = "Gesamtkosten_kumuliert" if "Gesamtkosten_kumuliert" in df.columns else "Gesamtkosten"
-        st.line_chart(df, x="Runde", y=y_achse, color="TeamID")
+        # Wir suchen die kumulierte Spalte für das Diagramm
+        y_col = "Gesamtkosten_kumuliert" if "Gesamtkosten_kumuliert" in df.columns else "neue_gesamtkosten"
+        if y_col in df.columns:
+            st.line_chart(df, x="Runde", y=y_col, color="TeamID")
     else:
         st.info("Warten auf erste Abgaben der Teams...")
 
