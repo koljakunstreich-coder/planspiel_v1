@@ -30,9 +30,8 @@ else:
 
 # --- 3. UI DESIGN ---
 st.title("🚲 E-Bike Startup Challenge")
-# Die App aktualisiert sich alle 30 Sekunden von selbst
-from streamlit_autorefresh import st_autorefresh
-count = st_autorefresh(interval=30000, key="fivedatarefresh")
+if st.sidebar.button("🔄 Daten aktualisieren"):
+    st.rerun()
 mode = st.sidebar.selectbox("Modus", ["Team-Input", "Lehrer-Dashboard"])
 
 if mode == "Team-Input":
