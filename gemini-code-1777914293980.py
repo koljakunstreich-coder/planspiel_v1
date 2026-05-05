@@ -29,7 +29,7 @@ else:
     aktuelle_runde = int(cell_value)
 
 # --- 3. UI DESIGN ---
-st.title("🚲 E-Bike Startup Challenge")
+st.title("🚲 Bikes & More Challenge")
 
 mode = st.sidebar.selectbox("Modus", ["Team-Input", "Lehrer-Dashboard"])
 
@@ -46,7 +46,7 @@ if mode == "Team-Input":
             break
 
     # Das Namensfeld wird mit dem gefundenen Namen vorausgefüllt
-    team_name = st.text_input("Startup Name", value=letzter_name, placeholder="Wird nach Runde 1 automatisch geladen...")
+    team_name = st.text_input("Teamname", value=letzter_name, placeholder="Wird nach Runde 1 automatisch geladen...")
     
     st.divider()
     st.header(f"Runde {aktuelle_runde}")
