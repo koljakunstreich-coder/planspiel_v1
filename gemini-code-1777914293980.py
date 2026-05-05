@@ -30,8 +30,8 @@ else:
 
 # --- 3. UI DESIGN ---
 st.title("🚲 E-Bike Startup Challenge")
-     if st.sidebar.button("🔄 Daten aktualisieren"):
-        st.rerun()
+if st.sidebar.button("🔄 Daten aktualisieren"):
+    st.rerun()
 mode = st.sidebar.selectbox("Modus", ["Team-Input", "Lehrer-Dashboard"])
 
 if mode == "Team-Input":
