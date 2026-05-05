@@ -30,7 +30,8 @@ else:
 
 # --- 3. UI DESIGN ---
 st.title("🚲 E-Bike Startup Challenge")
-
+     if st.sidebar.button("🔄 Daten aktualisieren"):
+        st.rerun()
 mode = st.sidebar.selectbox("Modus", ["Team-Input", "Lehrer-Dashboard"])
 
 if mode == "Team-Input":
@@ -49,8 +50,6 @@ if mode == "Team-Input":
     team_name = st.text_input("Startup Name", value=letzter_name, placeholder="Wird nach Runde 1 automatisch geladen...")
     
     st.divider()
-     if st.sidebar.button("🔄 Daten aktualisieren"):
-            st.rerun()
     st.header(f"Runde {aktuelle_runde}")
     bestellmenge = st.number_input("Bestellmenge (Stück):", min_value=0, step=1)
 
