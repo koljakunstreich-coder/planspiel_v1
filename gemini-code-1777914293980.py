@@ -100,7 +100,7 @@ if mode == "Team-Input":
         teams_sheet.append_row(neue_zeile)
         
         st.success(f"Runde {aktuelle_runde} erfolgreich gespeichert!")
-        st.info(f"Kosten Runde: {kosten_diese_runde}€ | Gesamtstand: {neue_gesamtkosten}€")
+        st.info(f"Kosten Runde: {kosten_diese_runde}€ | Gesamtstand: {neue_gesamtkosten}€ | Aktueller Lagerbestand: {neuer_bestand} Stk")
         st.balloons()
 
     st.write("---")
