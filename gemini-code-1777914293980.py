@@ -49,6 +49,8 @@ if mode == "Team-Input":
     team_name = st.text_input("Startup Name", value=letzter_name, placeholder="Wird nach Runde 1 automatisch geladen...")
     
     st.divider()
+     if st.sidebar.button("🔄 Daten aktualisieren"):
+            st.rerun()
     st.header(f"Runde {aktuelle_runde}")
     bestellmenge = st.number_input("Bestellmenge (Stück):", min_value=0, step=1)
 
@@ -82,8 +84,7 @@ if mode == "Team-Input":
         # über 'reversed(all_data)' wiedergefunden wird.
         neue_zeile = [aktuelle_runde, team_id, team_name, bestellmenge, neuer_bestand, kosten_diese_runde, neue_gesamtkosten]
         teams_sheet.append_row(neue_zeile)
-        if st.sidebar.button("🔄 Daten aktualisieren"):
-            st.rerun()
+       
         st.success(f"Erfolgreich gespeichert! Ihr habt nun {neuer_bestand} Bikes im Lager.")
         st.balloons()
 
