@@ -30,8 +30,7 @@ else:
 
 # --- 3. UI DESIGN ---
 st.title("🚲 E-Bike Startup Challenge")
-if st.sidebar.button("🔄 Daten aktualisieren"):
-    st.rerun()
+
 mode = st.sidebar.selectbox("Modus", ["Team-Input", "Lehrer-Dashboard"])
 
 if mode == "Team-Input":
@@ -83,7 +82,8 @@ if mode == "Team-Input":
         # über 'reversed(all_data)' wiedergefunden wird.
         neue_zeile = [aktuelle_runde, team_id, team_name, bestellmenge, neuer_bestand, kosten_diese_runde, neue_gesamtkosten]
         teams_sheet.append_row(neue_zeile)
-        
+        if st.sidebar.button("🔄 Daten aktualisieren"):
+            st.rerun()
         st.success(f"Erfolgreich gespeichert! Ihr habt nun {neuer_bestand} Bikes im Lager.")
         st.balloons()
 
